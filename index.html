@@ -1,0 +1,142 @@
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=0.1">
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body style="margin: 0px; background: #0e0e0e; background: white;">
+    <div id="title-bar-btns">
+        <button id="close-btn">x</button>
+    </div>
+    <div class="c-camera">
+        <canvas id="camera-canvas"></canvas>
+    </div>
+</body>
+
+<!------------ START SCRIPT ------------>
+<script>
+    const isReachable = require('is-reachable');
+    let ipc = require("electron").ipcRenderer;
+
+    function init() {
+        document.getElementById("close-btn").addEventListener("click", function (e) {
+            console.log("close");
+            ipc.send("win.close");
+        }); 
+    };
+
+    // document.onreadystatechange = function () {
+    //     if (document.readyState == "complete") {
+    //         init(); 
+    //     }
+    // };
+    init();
+    </script>
+    <script>
+    const cameraCanvas = document.getElementById("camera-canvas");
+    let ctx = cameraCanvas.getContext('2d');
+    ctx.save();
+
+    ctx.canvas.width = window.innerWidth;
+    ctx.canvas.height = window.innerHeight;
+
+    let { width, height } = cameraCanvas;
+    const lineThickness = 4.0;
+    const lineThicknessHalf =  lineThickness / 2.0;
+
+    let midPoint = {
+        width: width / 2.0,
+        height: height / 2.0,
+    };
+
+    let img = new Image();
+
+    let scale = 1;
+    let imageX = 0;
+    let imageY = 0;
+
+    let source = "";
+
+    (async () => {
+        let sourceMain = "http://10.17.20.2:1181";
+        let sourceUSB = "http://172.22.11.2:1181";
+        while (true) {
+            if (await isReachable(sourceMain)) {
+                source = sourceMain + "/?action=stream";
+                break;
+            } else if (await isReachable(sourceUSB)) {
+                source = sourceUSB + "/?action=stream";
+                break;
+            }
+            console.log("No camera sources available!");
+        }
+        setup(source);
+    })();
+
+    function setup (source) {
+        console.log("source: ", source);
+
+        img.src = source;
+        img.decode().then(() => { updateScale(); })
+
+        window.addEventListener('resize', updateScale);
+        window.setInterval("refreshCanvas()", 4);
+    }
+
+    function refreshCanvas () {
+        ctx.globalCompositeOperation = "source-over";
+        ctx.scale(scale, scale);
+
+        ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        try {
+            ctx.drawImage(img, imageX, imageY);
+        } catch {
+            img.src = source;
+            console.log(source);
+            console.log("stream unavailable");
+        }
+
+        ctx.globalCompositeOperation = "difference";
+        ctx.scale(1/scale, 1/scale);
+
+        ctx.fillStyle = "rgba(127, 127, 127, 1)";
+        ctx.fillRect(midPoint.width - lineThicknessHalf, 0.0, lineThickness, height);
+        ctx.fillRect(0.0, midPoint.height - lineThicknessHalf, width, lineThickness);
+
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = "rgba(255, 0, 255, 1)";
+        ctx.fillRect(midPoint.width - lineThicknessHalf, midPoint.height - lineThicknessHalf, lineThickness, lineThickness);
+    };
+
+    function updateScale () {
+        ctx.canvas.width = window.innerWidth;
+        ctx.canvas.height = window.innerHeight;
+
+        width = cameraCanvas.width;
+        height = cameraCanvas.height;
+
+        midPoint = {
+            width: width / 2.0,
+            height: height / 2.0,
+        };
+
+        widthScale = ctx.canvas.width / img.width;
+        heightScale = ctx.canvas.height / img.height;
+
+        scale = widthScale > heightScale ? heightScale : widthScale;
+
+        imageX = 0;
+        imageY = 0;
+
+        if (widthScale > heightScale) {
+            imageX = ctx.canvas.width - (img.width * scale);
+            imageX /= scale * 2;
+        } else {
+            imageY = ctx.canvas.height - (img.height * scale);
+            imageY /= scale * 2;
+        }
+    };
+</script>
+</html>

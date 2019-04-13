@@ -1,0 +1,16 @@
+{
+    "name": "phyxtgears-camera-app",
+    "description": "Camera Display",
+    "version": "v0.2.0",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "pack": "electron-builder --dir",
+        "dist": "electron-builder"
+    },
+    "devDependencies": {
+        "electron": "^4.1.4",
+        "electron-builder": "^20.39.0",
+        "is-reachable": "^3.0.0"
+    }
+}
