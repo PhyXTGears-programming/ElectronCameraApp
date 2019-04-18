@@ -1,16 +1,36 @@
 {
     "name": "phyxtgears-camera-app",
     "description": "Camera Display",
-    "version": "v0.2.0",
+    "author": {
+        "name": "PhyXTGears",
+        "email": "phyxtgearspro@gmail.com",
+        "url": "http://phyxtgears.org"
+    },
+    "version": "v0.3.0",
     "main": "main.js",
     "scripts": {
         "start": "electron .",
-        "pack": "electron-builder --dir",
         "dist": "electron-builder"
     },
     "devDependencies": {
         "electron": "^4.1.4",
-        "electron-builder": "^20.39.0",
+        "electron-builder": "^20.39.0"
+    },
+    "dependencies": {
         "is-reachable": "^3.0.0"
+    },
+    "build": {
+        "appId": "org.phyxtgears.cameraApp",
+        "icon": "camera.ico",
+        "win": {
+            "target": [
+                {
+                    "target": "portable",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ]
+        }
     }
 }
