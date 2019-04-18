@@ -32,10 +32,9 @@
     </script>
     <script>
     const cameraCanvas = document.getElementById("camera-canvas");
-    let ctx = cameraCanvas.getContext('2d');
-
-    ctx.canvas.width = window.innerWidth;
-    ctx.canvas.height = window.innerHeight;
+    let camCtx = cameraCanvas.getContext('2d');
+    camCtx.canvas.width = window.innerWidth;
+    camCtx.canvas.height = window.innerHeight;
 
     let { width, height } = cameraCanvas;
     const lineThickness = 4.0;
@@ -81,35 +80,35 @@
     }
 
     function refreshCanvas () {
-        ctx.globalCompositeOperation = "source-over";
-        ctx.scale(scale, scale);
+        camCtx.globalCompositeOperation = "source-over";
+        camCtx.scale(scale, scale);
 
-        ctx.fillStyle = "rgba(255, 255, 255, 1)";
-        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        camCtx.fillStyle = "rgba(255, 255, 255, 1)";
+        camCtx.fillRect(0, 0, camCtx.canvas.width, camCtx.canvas.height);
 
         try {
-            ctx.drawImage(img, imageX, imageY);
+            camCtx.drawImage(img, imageX, imageY);
         } catch {
             img.src = source;
             console.log(source);
             console.log("stream unavailable");
         }
 
-        ctx.globalCompositeOperation = "difference";
-        ctx.scale(1/scale, 1/scale);
+        camCtx.globalCompositeOperation = "difference";
+        camCtx.scale(1/scale, 1/scale);
 
-        ctx.fillStyle = "rgba(127, 127, 127, 1)";
-        ctx.fillRect(midPoint.width - lineThicknessHalf, 0.0, lineThickness, height);
-        ctx.fillRect(0.0, midPoint.height - lineThicknessHalf, width, lineThickness);
+        camCtx.fillStyle = "rgba(127, 127, 127, 1)";
+        camCtx.fillRect(midPoint.width - lineThicknessHalf, 0.0, lineThickness, height);
+        camCtx.fillRect(0.0, midPoint.height - lineThicknessHalf, width, lineThickness);
 
-        ctx.globalCompositeOperation = "source-over";
-        ctx.fillStyle = "rgba(255, 0, 255, 1)";
-        ctx.fillRect(midPoint.width - lineThicknessHalf, midPoint.height - lineThicknessHalf, lineThickness, lineThickness);
+        camCtx.globalCompositeOperation = "source-over";
+        camCtx.fillStyle = "rgba(255, 0, 255, 1)";
+        camCtx.fillRect(midPoint.width - lineThicknessHalf, midPoint.height - lineThicknessHalf, lineThickness, lineThickness);
     };
 
     function updateScale () {
-        ctx.canvas.width = window.innerWidth;
-        ctx.canvas.height = window.innerHeight;
+        camCtx.canvas.width = window.innerWidth;
+        camCtx.canvas.height = window.innerHeight;
 
         width = cameraCanvas.width;
         height = cameraCanvas.height;
@@ -119,8 +118,8 @@
             height: height / 2.0,
         };
 
-        widthScale = ctx.canvas.width / img.width;
-        heightScale = ctx.canvas.height / img.height;
+        widthScale = camCtx.canvas.width / img.width;
+        heightScale = camCtx.canvas.height / img.height;
 
         scale = widthScale > heightScale ? heightScale : widthScale;
 
@@ -131,7 +130,7 @@
             imageX = ctx.canvas.width - (img.width * scale);
             imageX /= scale * 2;
         } else {
-            imageY = ctx.canvas.height - (img.height * scale);
+            imageY = camCtx.canvas.height - (img.height * scale);
             imageY /= scale * 2;
         }
     };
