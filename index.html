@@ -5,9 +5,7 @@
 </head>
 
 <body style="margin: 0px; background: #0e0e0e; background: white;">
-    <div id="title-bar-btns">
-        <button id="close-btn">x</button>
-    </div>
+    <button id="close-button">x</button>
     <div class="c-camera">
         <canvas id="camera-canvas"></canvas>
     </div>
@@ -19,7 +17,7 @@
     let ipc = require("electron").ipcRenderer;
 
     function init() {
-        document.getElementById("close-btn").addEventListener("click", function (e) {
+        document.getElementById("close-button").addEventListener("click", function (e) {
             console.log("close");
             ipc.send("win.close");
         }); 
