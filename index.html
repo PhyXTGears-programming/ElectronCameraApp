@@ -127,7 +127,8 @@
         imageY = 0;
 
         if (widthScale > heightScale) {
-            imageX = ctx.canvas.width - (img.width * scale);
+            imageX = camCtx.canvas.width - (img.width * scale);
+
             imageX /= scale * 2;
         } else {
             imageY = camCtx.canvas.height - (img.height * scale);
