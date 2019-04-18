@@ -5,6 +5,7 @@
 </head>
 
 <body style="margin: 0px; background: #0e0e0e; background: white;">
+    <canvas id="status-indicator"></canvas>
     <button id="close-button">x</button>
     <div class="c-camera">
         <canvas id="camera-canvas"></canvas>
@@ -35,6 +36,14 @@
     let camCtx = cameraCanvas.getContext('2d');
     camCtx.canvas.width = window.innerWidth;
     camCtx.canvas.height = window.innerHeight;
+
+    const statusIndicator = document.getElementById("status-indicator");
+    let stCtx = statusIndicator.getContext('2d');
+    stCtx.canvas.width = 25;
+    stCtx.canvas.height = 200;
+
+    stCtx.fillStyle = "rgb(255, 0, 0)";
+    stCtx.fillRect(0, 0, stCtx.canvas.width, stCtx.canvas.height);
 
     let { width, height } = cameraCanvas;
     const lineThickness = 4.0;
@@ -67,6 +76,9 @@
             console.log("No camera sources available!");
         }
         setup(source);
+
+        stCtx.fillStyle = "rgb(0, 255, 0)";
+        stCtx.fillRect(0, 0, stCtx.canvas.width, stCtx.canvas.height);
     })();
 
     function setup (source) {

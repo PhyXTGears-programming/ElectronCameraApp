@@ -3,10 +3,10 @@ body {
     margin: 0px; 
 }
 
-#title {
+#status-indicator {
     position: fixed;
-    top: 0px;
-    left: 6px; 
+    top: 4px;
+    left: 4px;
 }
 
 #close-button {
