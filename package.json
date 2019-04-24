@@ -1,6 +1,7 @@
 {
     "name": "phyxtgears-camera-app",
     "description": "Camera Display",
+	"license": "MIT",
     "author": {
         "name": "PhyXTGears",
         "email": "phyxtgearspro@gmail.com",

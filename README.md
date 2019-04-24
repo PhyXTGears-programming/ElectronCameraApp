@@ -15,6 +15,8 @@ Most settings are currently hard-coded.
 - [ ] Add user control to save position and size of app.
 - [ ] Load and restore save position and size from config file.
 
+# License
+This project is licensed under the MIT License.
 
 # Acknowledgements
 
