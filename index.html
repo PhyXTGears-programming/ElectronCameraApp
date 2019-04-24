@@ -12,12 +12,14 @@
     </div>
 </body>
 
-<!------------ START SCRIPT ------------>
+<!-- JavaScript scripts -->
 <script>
+    /* Electron setups */
     const isReachable = require('is-reachable');
     let ipc = require("electron").ipcRenderer;
 
     function init() {
+        // Quit with the x button
         document.getElementById("close-button").addEventListener("click", function (e) {
             console.log("close");
             ipc.send("win.close");
@@ -30,13 +32,25 @@
     //     }
     // };
     init();
-    </script>
-    <script>
+</script>
+
+<script>
+    /* Camera drawing setups */
+
+    /* Change this number to your team number! */
+    const TEAM_NUMBER = "1720";
+
+    // Pad the team number for the IP address
+    let team_num = "0".repeat(4-TEAM_NUMBER.length) + TEAM_NUMBER;
+    let team_ip = team_num[0] + team_num[1] + "." + team_num[2] + team_num[3];
+
+    // The drawing plane
     const cameraCanvas = document.getElementById("camera-canvas");
     let camCtx = cameraCanvas.getContext('2d');
     camCtx.canvas.width = window.innerWidth;
     camCtx.canvas.height = window.innerHeight;
 
+    // Connection status. Red if not connected, green if connected.
     const statusIndicator = document.getElementById("status-indicator");
     let stCtx = statusIndicator.getContext('2d');
     stCtx.canvas.width = 25;
@@ -54,17 +68,21 @@
         height: height / 2.0,
     };
 
-    let img = new Image();
+    let img = new Image(); // This is where the camera feed goes
 
+    // Used for resizing and centering the image
     let scale = 1;
     let imageX = 0;
     let imageY = 0;
 
     let source = "";
 
+    // Connect to the camera
     (async () => {
-        let sourceMain = "http://10.17.20.2:1181";
-        let sourceUSB = "http://172.22.11.2:1181";
+        let sourceMain = "http://10." + team_ip + ".2:1181"; // IP is team number dependent
+        let sourceUSB = "http://172.22.11.2:1181";           // Always the same
+        
+        // Wait until first contact
         while (true) {
             if (await isReachable(sourceMain)) {
                 source = sourceMain + "/?action=stream";
@@ -77,6 +95,7 @@
         }
         setup(source);
 
+        // Green for go!
         stCtx.fillStyle = "rgb(0, 255, 0)";
         stCtx.fillRect(0, 0, stCtx.canvas.width, stCtx.canvas.height);
     })();
