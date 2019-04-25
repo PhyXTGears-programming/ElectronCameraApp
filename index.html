@@ -54,7 +54,7 @@
     const statusIndicator = document.getElementById("status-indicator");
     let stCtx = statusIndicator.getContext('2d');
     stCtx.canvas.width = 25;
-    stCtx.canvas.height = 200;
+    stCtx.canvas.height = 400;
 
     stCtx.fillStyle = "rgb(255, 0, 0)";
     stCtx.fillRect(0, 0, stCtx.canvas.width, stCtx.canvas.height);
@@ -76,6 +76,8 @@
     let imageY = 0;
 
     let source = "";
+
+    let disconnected = false;
 
     // Connect to the camera
     (async () => {
@@ -119,10 +121,22 @@
 
         try {
             camCtx.drawImage(img, imageX, imageY);
+
+            if (disconnected) {
+                stCtx.fillStyle = "rgb(255, 255, 0)";
+                stCtx.fillRect(0, 0, stCtx.canvas.width, stCtx.canvas.height);
+
+                disconnected = false;
+            }
         } catch {
             img.src = source;
             console.log(source);
             console.log("stream unavailable");
+
+            disconnected = true;            
+
+            stCtx.fillStyle = "rgb(255, 0, 255)";
+            stCtx.fillRect(0, 0, stCtx.canvas.width, stCtx.canvas.height);
         }
 
         camCtx.globalCompositeOperation = "difference";
