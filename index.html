@@ -145,11 +145,12 @@
         camCtx.fillStyle = "rgba(127, 127, 127, 1)";
         camCtx.fillRect(midPoint.width - lineThicknessHalf, 0.0, lineThickness, height);
         camCtx.fillRect(0.0, midPoint.height - lineThicknessHalf, width, lineThickness);
-
-        camCtx.globalCompositeOperation = "source-over";
-        camCtx.fillStyle = "rgba(255, 0, 255, 1)";
         camCtx.fillRect(midPoint.width - lineThicknessHalf, midPoint.height - lineThicknessHalf, lineThickness, lineThickness);
     };
+
+    // function imageLoad () {
+
+    // }
 
     function updateScale () {
         camCtx.canvas.width = window.innerWidth;

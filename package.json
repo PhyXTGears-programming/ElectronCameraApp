@@ -7,7 +7,7 @@
         "email": "phyxtgearspro@gmail.com",
         "url": "http://phyxtgears.org"
     },
-    "version": "v0.4.0",
+    "version": "v0.4.1",
     "main": "main.js",
     "scripts": {
         "start": "electron .",
