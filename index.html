@@ -14,35 +14,20 @@
 
 <!-- JavaScript scripts -->
 <script>
-    /* Electron setups */
-    const isReachable = require('is-reachable');
-    let ipc = require("electron").ipcRenderer;
-
-    function init() {
-        // Quit with the x button
-        document.getElementById("close-button").addEventListener("click", function (e) {
-            console.log("close");
-            ipc.send("win.close");
-        }); 
-    };
-
-    // document.onreadystatechange = function () {
-    //     if (document.readyState == "complete") {
-    //         init(); 
-    //     }
-    // };
-    init();
-</script>
-
-<script>
-    /* Camera drawing setups */
-
+    // SECTION Initialization
     /* Change this number to your team number! */
     const TEAM_NUMBER = "1720";
 
     // Pad the team number for the IP address
     let team_num = "0".repeat(4-TEAM_NUMBER.length) + TEAM_NUMBER;
     let team_ip = team_num[0] + team_num[1] + "." + team_num[2] + team_num[3];
+    
+    /* Electron libraries */
+    let ipc = require("electron").ipcRenderer;
+
+    document.getElementById("close-button").addEventListener("click", function (e) {
+        ipc.send("win.close");
+    });
 
     // The drawing plane
     const cameraCanvas = document.getElementById("camera-canvas");
@@ -68,76 +53,150 @@
         height: height / 2.0,
     };
 
-    let img = new Image(); // This is where the camera feed goes
-
     // Used for resizing and centering the image
     let scale = 1;
     let imageX = 0;
     let imageY = 0;
 
-    let source = "";
+    // Start Stream
+    manageStream();
 
-    let disconnected = false;
+    // SECTION IP Utils
+    function getStreamIP () {
+        let team_num = "0".repeat(4-TEAM_NUMBER.length) + TEAM_NUMBER;
+        let team_ip = team_num[0] + team_num[1] + "." + team_num[2] + team_num[3];
 
-    // Connect to the camera
-    (async () => {
         let sourceMain = "http://10." + team_ip + ".2:1181"; // IP is team number dependent
         let sourceUSB = "http://172.22.11.2:1181";           // Always the same
-        
-        // Wait until first contact
-        while (true) {
-            if (await isReachable(sourceMain)) {
-                source = sourceMain + "/?action=stream";
-                break;
-            } else if (await isReachable(sourceUSB)) {
-                source = sourceUSB + "/?action=stream";
-                break;
-            }
-            console.log("No camera sources available!");
-        }
-        setup(source);
 
-        // Green for go!
-        stCtx.fillStyle = "rgb(0, 255, 0)";
-        stCtx.fillRect(0, 0, stCtx.canvas.width, stCtx.canvas.height);
-    })();
-
-    function setup (source) {
-        console.log("source: ", source);
-
-        img.src = source;
-        img.decode().then(() => { updateScale(); })
-
-        window.addEventListener('resize', updateScale);
-        window.setInterval("refreshCanvas()", 4);
+        return "http://localhost:8000/camera/mjpeg"; // TODO - choose one of: sourceMain, sourceUSB, or null
     }
 
-    function refreshCanvas () {
+    // SECTION Stream Management
+    async function manageStream () {
+        console.log("manage stream");
+        while (true) {
+            let currentIP = getStreamIP();
+
+            if (currentIP == null) {
+                continue;
+            }
+
+            let response = null;
+
+            try {
+                response = await fetch(currentIP);
+            } catch (error) {
+                console.log("Didn't get response from server");
+                continue;
+            }
+
+            if (!response.ok) {
+                console.log("Response not ok");
+                continue;
+            }
+            
+            if (!response.body) {
+                throw Error('ReadableStream not yet supported in this browser.');
+            }
+
+            let returnCode = streamVideo(response.body.getReader());
+
+            // TODO - do stuff before resuming stream
+            // if (returnCode == 0) {
+            //     // disconnected
+            // } else {
+            //     // got event requiring new stream
+            //     // ex. team change, reload stream
+            // }
+        }
+    };
+
+    const SOI = new Uint8Array(2);
+    SOI[0] = 0xFF;
+    SOI[1] = 0xD8;
+
+    function streamVideo (reader) {
+        // Stream the video
+        let ipc = require("electron").ipcMain;
+        
+        console.log("stream"); // TODO Fix Stopping
+        
+        let headers = '';
+        let contentLength = -1;
+        let imageBuffer = null;
+        let bytesRead = 0;
+        
+        let frames = 0;
+        let fpsCalc = setInterval(() => {
+            console.log("fps: " + frames);
+            frames = 0;
+        }, 1000)
+
+        const read = () => {
+            reader.read().then(
+                ({done, value}) => {
+                    if (done) {
+                        return 0;
+                    }
+
+                    for (let index = 0; index < value.length; index++) {     
+                        // we've found start of the frame. Everything we've read till now is the header.
+                        if (value[index] === SOI[0] && value[index+1] === SOI[1]) {
+                            console.log('header found: ' + newHeader);
+                            contentLength = getLength(headers);
+                            // console.log("Content Length: " + newContentLength);
+                            imageBuffer = new Uint8Array(new ArrayBuffer(contentLength));
+                        }
+                        // we're still reading the header.
+                        if (contentLength <= 0) {
+                            headers += String.fromCharCode(value[index]);
+                        }
+                        // we're now reading the jpeg. 
+                        else if (bytesRead < contentLength){
+                            imageBuffer[bytesRead++] = value[index];
+                        }
+                        // we're done reading the jpeg. Time to render it. 
+                        else {
+                            // console.log("jpeg read with bytes : " + bytesRead);
+                            drawImage(imageBuffer);
+                            frames++;
+                            contentLength = 0;
+                            bytesRead = 0;
+                            headers = '';
+                        }
+                    }
+
+                    read();
+                }
+            )
+        }
+
+        clearInterval(fpsCalc);
+
+        return 0;
+    };
+
+    function getLength (headers) {
+        headers.split('\n').forEach(header => {
+            let pair = header.split(':');
+            if (pair[0] === 'Content-length') {
+                return pair[1];
+            }
+        });
+    };
+
+    // SECTION Image Drawing
+    async function drawImage (imageBuffer) {
         camCtx.globalCompositeOperation = "source-over";
         camCtx.scale(scale, scale);
 
         camCtx.fillStyle = "rgba(255, 255, 255, 1)";
         camCtx.fillRect(0, 0, camCtx.canvas.width, camCtx.canvas.height);
 
-        try {
-            camCtx.drawImage(img, imageX, imageY);
-
-            if (disconnected) {
-                stCtx.fillStyle = "rgb(255, 255, 0)";
-                stCtx.fillRect(0, 0, stCtx.canvas.width, stCtx.canvas.height);
-
-                disconnected = false;
-            }
-        } catch {
-            img.src = source;
-            console.log(source);
-            console.log("stream unavailable");
-
-            disconnected = true;            
-
-            stCtx.fillStyle = "rgb(255, 0, 255)";
-            stCtx.fillRect(0, 0, stCtx.canvas.width, stCtx.canvas.height);
-        }
+        let img = new Image(); // This is where the camera feed goes
+        img.src = URL.createObjectURL(new Blob([imageBuffer], {type: 'image/jpeg'}));
+        camCtx.drawImage(img, imageX, imageY);
 
         camCtx.globalCompositeOperation = "difference";
         camCtx.scale(1/scale, 1/scale);
@@ -147,10 +206,6 @@
         camCtx.fillRect(0.0, midPoint.height - lineThicknessHalf, width, lineThickness);
         camCtx.fillRect(midPoint.width - lineThicknessHalf, midPoint.height - lineThicknessHalf, lineThickness, lineThickness);
     };
-
-    // function imageLoad () {
-
-    // }
 
     function updateScale () {
         camCtx.canvas.width = window.innerWidth;
